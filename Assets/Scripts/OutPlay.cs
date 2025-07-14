@@ -4,52 +4,36 @@ using UnityEngine.UI;
 
 public class PlayerStairCheck : MonoBehaviour
 {
-    private bool isOnBlock = false;
-    private bool gameOverTriggered = false;
-    
-    //  [인스펙터에 표시] 게임 오버 텍스트 UI 연결용
-    [SerializeField] private TextMeshProUGUI gameOverText;
+    public LayerMask groundLayer; // Block이 있는 레이어만 체크
+    public float checkDistance = 0.1f;
+    private Rigidbody2D rb;
 
-    void OnCollisionStay(Collision collision)
+    void Start()
     {
-        if (collision.gameObject.name.Contains("Block"))
-        {
-            isOnBlock = true;
-        }
-    }
-
-    void OnCollisionExit(Collision collision)
-    {
-        if (collision.gameObject.name.Contains("Block"))
-        {
-            isOnBlock = false;
-        }
+        rb = GetComponent<Rigidbody2D>();
     }
 
     void Update()
     {
-        if (!isOnBlock && !gameOverTriggered)
+        bool isGrounded = IsGrounded();
+
+        if (!isGrounded)
         {
-            TriggerGameOver();
-        }
-    }
-
-    void TriggerGameOver()
-    {
-        gameOverTriggered = true;
-
-        //  콘솔에도 출력
-        Debug.Log("게임 오버! 'play' 오브젝트가 Block 위에 없음.");
-
-        //  UI 텍스트가 연결되어 있으면 화면에 표시
-        if (gameOverText != null)
-        {
-            gameOverText.text = "게임 오버!";
-            gameOverText.enabled = true;
+            // 떨어지는 로직
+            rb.gravityScale = 3f; // 떨어짐
         }
         else
         {
-            Debug.LogWarning("gameOverText UI가 연결되지 않았습니다!");
+            // 블록 위일 때
+            rb.gravityScale = 0f;
+            rb.velocity = new Vector2(rb.velocity.x, 0); // 멈추게
         }
+    }
+
+    bool IsGrounded()
+    {
+        RaycastHit2D hit = Physics2D.Raycast(transform.position, Vector2.down, checkDistance, groundLayer);
+        Debug.DrawRay(transform.position, Vector2.down * checkDistance, Color.red); // 디버그용
+        return hit.collider != null;
     }
 }
